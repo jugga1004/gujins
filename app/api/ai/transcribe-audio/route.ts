@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   if (!audioId) return NextResponse.json({ error: 'audioId 필요' }, { status: 400 });
 
   const audio = await queryOne<{ id: number; meeting_id: number; file_path: string }>(
-    'SELECT id, meeting_id, file_path FROM audio_files WHERE id = $1',
+    'SELECT id, meeting_id, file_path FROM moim_audio_files WHERE id = $1',
     [audioId]
   );
   if (!audio) return NextResponse.json({ error: '음성 파일을 찾을 수 없습니다.' }, { status: 404 });

@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
 
   const meetings = await query(`
     SELECT m.*, u.display_name as creator_name,
-      (SELECT COUNT(*) FROM photos WHERE meeting_id = m.id)::int as photo_count,
-      (SELECT COUNT(*) FROM comments WHERE meeting_id = m.id AND is_deleted = 0)::int as comment_count,
-      (SELECT file_path FROM photos WHERE meeting_id = m.id ORDER BY sort_order ASC LIMIT 1) as thumb_path
-    FROM meetings m
-    JOIN users u ON m.created_by = u.id
+      (SELECT COUNT(*) FROM moim_photos WHERE meeting_id = m.id)::int as photo_count,
+      (SELECT COUNT(*) FROM moim_comments WHERE meeting_id = m.id AND is_deleted = 0)::int as comment_count,
+      (SELECT file_path FROM moim_photos WHERE meeting_id = m.id ORDER BY sort_order ASC LIMIT 1) as thumb_path
+    FROM moim_meetings m
+    JOIN moim_users u ON m.created_by = u.id
     WHERE m.group_id = $1
     ORDER BY m.meeting_date DESC, m.created_at DESC
   `, [groupId ? parseInt(groupId) : null]);
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
   if (!title || !meetingDate) return NextResponse.json({ error: '제목과 날짜는 필수입니다.' }, { status: 400 });
 
   const rows = await query<{ id: number }>(
-    `INSERT INTO meetings (title, meeting_date, location, description, topics, created_by, group_id)
+    `INSERT INTO moim_meetings (title, meeting_date, location, description, topics, created_by, group_id)
      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
     [title, meetingDate, location || null, description || null, JSON.stringify(topics || []), session.userId, groupId || null]
   );
@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
   if (Array.isArray(members) && members.length > 0) {
     for (const userId of members) {
       await execute(
-        'INSERT INTO meeting_members (meeting_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        'INSERT INTO moim_meeting_members (meeting_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
         [meetingId, userId]
       );
     }
   }
 
-  const meeting = await query('SELECT * FROM meetings WHERE id = $1', [meetingId]);
+  const meeting = await query('SELECT * FROM moim_meetings WHERE id = $1', [meetingId]);
   return NextResponse.json({ data: meeting[0] }, { status: 201 });
 }

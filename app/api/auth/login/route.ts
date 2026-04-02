@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
 
     // 기존 유저 조회
     let user = await queryOne<{ id: number; username: string; display_name: string; role: string }>(
-      'SELECT id, username, display_name, role FROM users WHERE username = $1 AND is_active = 1',
+      'SELECT id, username, display_name, role FROM moim_users WHERE username = $1 AND is_active = 1',
       [trimmed]
     );
 
     // 없으면 자동 생성
     if (!user) {
       user = await queryOne<{ id: number; username: string; display_name: string; role: string }>(
-        `INSERT INTO users (username, display_name, role)
+        `INSERT INTO moim_users (username, display_name, role)
          VALUES ($1, $1, 'member')
          ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username
          RETURNING id, username, display_name, role`,

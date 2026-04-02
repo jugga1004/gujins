@@ -13,7 +13,7 @@ export default async function AdminUsersPage() {
 
   await initDb();
   const users = await query(
-    'SELECT id, username, display_name, role, created_at, is_active FROM users ORDER BY created_at ASC'
+    'SELECT id, username, display_name, role, created_at, is_active FROM moim_users ORDER BY created_at ASC'
   );
 
   return (

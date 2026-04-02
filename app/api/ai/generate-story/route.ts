@@ -11,17 +11,17 @@ export async function POST(request: NextRequest) {
   if (!meetingId) return NextResponse.json({ error: 'meetingId 필요' }, { status: 400 });
 
   const meeting = await queryOne(
-    'SELECT m.*, u.display_name as creator_name FROM meetings m JOIN users u ON m.created_by = u.id WHERE m.id = $1',
+    'SELECT m.*, u.display_name as creator_name FROM moim_meetings m JOIN moim_users u ON m.created_by = u.id WHERE m.id = $1',
     [meetingId]
   );
   if (!meeting) return NextResponse.json({ error: '모임을 찾을 수 없습니다.' }, { status: 404 });
 
   const photos = await query<{ exif_taken_at: string; exif_lat: number; exif_lng: number }>(
-    'SELECT exif_taken_at, exif_lat, exif_lng FROM photos WHERE meeting_id = $1 ORDER BY exif_taken_at ASC',
+    'SELECT exif_taken_at, exif_lat, exif_lng FROM moim_photos WHERE meeting_id = $1 ORDER BY exif_taken_at ASC',
     [meetingId]
   );
   const members = await query<{ display_name: string }>(
-    'SELECT u.display_name FROM meeting_members mm JOIN users u ON mm.user_id = u.id WHERE mm.meeting_id = $1',
+    'SELECT u.display_name FROM moim_meeting_members mm JOIN moim_users u ON mm.user_id = u.id WHERE mm.meeting_id = $1',
     [meetingId]
   );
 

@@ -15,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   if (role) await execute('UPDATE users SET role = $1 WHERE id = $2', [role, userId]);
   if (isActive !== undefined) await execute('UPDATE users SET is_active = $1 WHERE id = $2', [isActive ? 1 : 0, userId]);
 
-  const user = await query('SELECT id, username, display_name, role, created_at, is_active FROM users WHERE id = $1', [userId]);
+  const user = await query('SELECT id, username, display_name, role, created_at, is_active FROM moim_users WHERE id = $1', [userId]);
   return NextResponse.json({ data: user[0] });
 }
 

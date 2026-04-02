@@ -33,13 +33,13 @@ export default async function GroupDetailPage({ params }: Params) {
 
   // 멤버 확인
   const member = await queryOne(
-    'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+    'SELECT 1 FROM moim_group_members WHERE group_id = $1 AND user_id = $2',
     [groupId, session.userId]
   );
   if (!member) redirect('/groups');
 
   const group = await queryOne<{ id: number; name: string; created_by: number }>(
-    'SELECT id, name, created_by FROM groups WHERE id = $1',
+    'SELECT id, name, created_by FROM moim_groups WHERE id = $1',
     [groupId]
   );
   if (!group) notFound();
@@ -48,11 +48,11 @@ export default async function GroupDetailPage({ params }: Params) {
     SELECT
       m.id, m.title, m.meeting_date, m.location, m.total_cost, m.topics,
       u.display_name as creator_name,
-      (SELECT COUNT(*) FROM photos WHERE meeting_id = m.id)::int as photo_count,
-      (SELECT COUNT(*) FROM comments WHERE meeting_id = m.id AND is_deleted = 0)::int as comment_count,
-      (SELECT file_path FROM photos WHERE meeting_id = m.id ORDER BY sort_order ASC LIMIT 1) as thumb_path
-    FROM meetings m
-    JOIN users u ON m.created_by = u.id
+      (SELECT COUNT(*) FROM moim_photos WHERE meeting_id = m.id)::int as photo_count,
+      (SELECT COUNT(*) FROM moim_comments WHERE meeting_id = m.id AND is_deleted = 0)::int as comment_count,
+      (SELECT file_path FROM moim_photos WHERE meeting_id = m.id ORDER BY sort_order ASC LIMIT 1) as thumb_path
+    FROM moim_meetings m
+    JOIN moim_users u ON m.created_by = u.id
     WHERE m.group_id = $1
     ORDER BY m.meeting_date DESC, m.created_at DESC
   `, [groupId]);

@@ -22,9 +22,9 @@ export default async function GroupsPage() {
 
   const groups = await query<GroupRow>(
     `SELECT g.id, g.name, g.code, g.created_by, g.created_at,
-       (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int as member_count
-     FROM groups g
-     JOIN group_members gm ON gm.group_id = g.id
+       (SELECT COUNT(*) FROM moim_group_members WHERE group_id = g.id)::int as member_count
+     FROM moim_groups g
+     JOIN moim_group_members gm ON gm.group_id = g.id
      WHERE gm.user_id = $1
      ORDER BY g.created_at DESC`,
     [session.userId]
