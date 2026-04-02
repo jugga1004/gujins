@@ -41,8 +41,21 @@ export async function initDb(): Promise<void> {
       created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       is_active    INTEGER NOT NULL DEFAULT 1
     );
+    CREATE TABLE IF NOT EXISTS groups (
+      id         SERIAL PRIMARY KEY,
+      name       TEXT NOT NULL UNIQUE,
+      created_by INTEGER NOT NULL REFERENCES users(id),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS group_members (
+      group_id   INTEGER NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+      user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      joined_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (group_id, user_id)
+    );
     CREATE TABLE IF NOT EXISTS meetings (
       id           SERIAL PRIMARY KEY,
+      group_id     INTEGER REFERENCES groups(id) ON DELETE CASCADE,
       title        TEXT NOT NULL,
       meeting_date TEXT NOT NULL,
       location     TEXT,
@@ -58,6 +71,7 @@ export async function initDb(): Promise<void> {
       updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
     CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(meeting_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_meetings_group ON meetings(group_id);
     CREATE TABLE IF NOT EXISTS photos (
       id            SERIAL PRIMARY KEY,
       meeting_id    INTEGER NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
@@ -128,14 +142,4 @@ export async function initDb(): Promise<void> {
       PRIMARY KEY (meeting_id, user_id)
     );
   `);
-
-  // 최초 관리자 계정 생성
-  const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-  const adminDisplayName = process.env.ADMIN_DISPLAY_NAME || '관리자';
-  await pool.query(
-    `INSERT INTO users (username, display_name, role)
-     VALUES ($1, $2, 'admin')
-     ON CONFLICT (username) DO NOTHING`,
-    [adminUsername, adminDisplayName]
-  );
 }

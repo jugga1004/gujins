@@ -13,7 +13,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -21,13 +20,11 @@ export default function LoginPage() {
         body: JSON.stringify({ username }),
       });
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error || '로그인에 실패했습니다.');
         return;
       }
-
-      router.push('/meetings');
+      router.push('/groups');
       router.refresh();
     } catch {
       setError('서버 오류가 발생했습니다.');
@@ -44,7 +41,6 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-gray-800">모임기록</h1>
           <p className="text-gray-500 mt-2 text-sm">우리 모임의 소중한 기억을 함께 기록해요</p>
         </div>
-
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -59,14 +55,11 @@ export default function LoginPage() {
                 autoFocus
                 autoComplete="username"
               />
+              <p className="text-xs text-gray-400 mt-1">처음이라면 자동으로 계정이 만들어져요</p>
             </div>
-
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">
-                {error}
-              </div>
+              <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">{error}</div>
             )}
-
             <button
               type="submit"
               disabled={loading}
@@ -75,10 +68,6 @@ export default function LoginPage() {
               {loading ? '입장 중...' : '입장하기'}
             </button>
           </form>
-
-          <p className="text-center text-xs text-gray-400 mt-6">
-            계정이 없으신가요? 관리자에게 문의하세요.
-          </p>
         </div>
       </div>
     </div>

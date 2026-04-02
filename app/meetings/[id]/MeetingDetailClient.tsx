@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { JWTPayload } from '@/lib/auth';
@@ -40,6 +40,8 @@ interface MeetingDetailClientProps {
 
 export default function MeetingDetailClient({ initialData, session }: MeetingDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const groupId = searchParams.get('groupId');
   const [data, setData] = useState<MeetingData>(initialData as unknown as MeetingData);
   const [commentText, setCommentText] = useState('');
   const [activeTab, setActiveTab] = useState<'story' | 'photos' | 'expenses' | 'audio'>('story');
@@ -213,7 +215,7 @@ export default function MeetingDetailClient({ initialData, session }: MeetingDet
     <div className="max-w-3xl mx-auto">
       {/* 헤더 */}
       <div className="flex items-start gap-3 mb-6">
-        <button onClick={() => router.push('/meetings')} className="text-gray-400 hover:text-gray-600 text-2xl mt-1">
+        <button onClick={() => router.push(groupId ? `/groups/${groupId}` : '/groups')} className="text-gray-400 hover:text-gray-600 text-2xl mt-1">
           ←
         </button>
         <div className="flex-1">
