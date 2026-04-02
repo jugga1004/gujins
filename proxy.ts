@@ -7,14 +7,13 @@ const SECRET = new TextEncoder().encode(
 
 const PUBLIC_PATHS = ['/login', '/api/auth/login'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // 정적 파일 제외
   if (pathname.startsWith('/_next') || pathname === '/favicon.ico') {
     return NextResponse.next();
   }
