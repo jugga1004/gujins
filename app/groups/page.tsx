@@ -9,7 +9,6 @@ import Header from '@/components/layout/Header';
 interface GroupRow {
   id: number;
   name: string;
-  code: string;
   created_by: number;
   member_count: number;
   created_at: string;
@@ -21,7 +20,7 @@ export default async function GroupsPage() {
   await initDb();
 
   const groups = await query<GroupRow>(
-    `SELECT g.id, g.name, g.code, g.created_by, g.created_at,
+    `SELECT g.id, g.name, g.created_by, g.created_at,
        (SELECT COUNT(*) FROM moim_group_members WHERE group_id = g.id)::int as member_count
      FROM moim_groups g
      JOIN moim_group_members gm ON gm.group_id = g.id
