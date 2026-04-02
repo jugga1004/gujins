@@ -81,6 +81,12 @@ export async function initDb(): Promise<void> {
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`);
 
+  // 기존 users 테이블 컬럼 추가 (없는 경우)
+  await runSafe(`ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT ''`);
+  await runSafe(`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'member'`);
+  await runSafe(`ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1`);
+  await runSafe(`UPDATE users SET display_name = username WHERE display_name = ''`);
+
   // 기존 meetings 테이블에 group_id 컬럼 추가 (없는 경우)
   await runSafe(`ALTER TABLE meetings ADD COLUMN group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE`);
 
