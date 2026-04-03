@@ -23,7 +23,13 @@ export async function GET(request: NextRequest, { params }: Params) {
     query('SELECT * FROM moim_receipts WHERE meeting_id = $1 ORDER BY uploaded_at ASC', [meetingId]),
     query('SELECT * FROM moim_audio_files WHERE meeting_id = $1 ORDER BY uploaded_at ASC', [meetingId]),
     query('SELECT c.*, u.display_name as author_name FROM moim_comments c JOIN moim_users u ON c.author_id = u.id WHERE c.meeting_id = $1 AND c.is_deleted = 0 ORDER BY c.created_at ASC', [meetingId]),
-    query('SELECT u.id, u.username, u.display_name FROM moim_meeting_members mm JOIN moim_users u ON mm.user_id = u.id WHERE mm.meeting_id = $1', [meetingId]),
+    query(`SELECT u.id, u.username,
+       COALESCE(NULLIF(gm.display_name,''), u.display_name) as display_name
+     FROM moim_meeting_members mm
+     JOIN moim_users u ON mm.user_id = u.id
+     LEFT JOIN moim_meetings m2 ON m2.id = mm.meeting_id
+     LEFT JOIN moim_group_members gm ON gm.group_id = m2.group_id AND gm.user_id = u.id
+     WHERE mm.meeting_id = $1`, [meetingId]),
   ]);
 
   return NextResponse.json({
