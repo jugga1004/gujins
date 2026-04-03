@@ -42,7 +42,9 @@ export async function POST(request: NextRequest) {
     });
     await execute('UPDATE moim_meetings SET ai_story = $1 WHERE id = $2', [story, meetingId]);
     return NextResponse.json({ data: { story } });
-  } catch {
-    return NextResponse.json({ error: 'AI 이야기 생성에 실패했습니다.' }, { status: 500 });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('[generate-story error]', msg);
+    return NextResponse.json({ error: 'AI 이야기 생성에 실패했습니다.', detail: msg }, { status: 500 });
   }
 }
