@@ -164,8 +164,12 @@ export default function MeetingDetailClient({ initialData, session }: MeetingDet
       if (res.ok) {
         await refreshData();
       } else {
-        const d = await res.json();
-        showToast(`AI 오류: ${d.detail || d.error || '알 수 없는 오류'}`);
+        let detail = `서버 오류 (${res.status})`;
+        try {
+          const d = await res.json();
+          detail = d.detail || d.error || detail;
+        } catch { /* HTML 응답 등 파싱 실패 시 무시 */ }
+        showToast(`AI 오류: ${detail}`);
       }
     } catch (e) {
       showToast(`AI 오류: ${e instanceof Error ? e.message : '네트워크 오류'}`);
