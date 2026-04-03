@@ -62,12 +62,13 @@ export default async function GroupDetailPage({ params }: Params) {
   const meetings = await query<MeetingRow>(`
     SELECT
       m.id, m.title, m.meeting_date, m.location, m.total_cost, m.topics,
-      u.display_name as creator_name,
+      COALESCE(NULLIF(gm.display_name,''), u.display_name) as creator_name,
       (SELECT COUNT(*) FROM moim_photos WHERE meeting_id = m.id)::int as photo_count,
       (SELECT COUNT(*) FROM moim_comments WHERE meeting_id = m.id AND is_deleted = 0)::int as comment_count,
       (SELECT file_path FROM moim_photos WHERE meeting_id = m.id ORDER BY sort_order ASC LIMIT 1) as thumb_path
     FROM moim_meetings m
     JOIN moim_users u ON m.created_by = u.id
+    LEFT JOIN moim_group_members gm ON gm.group_id = m.group_id AND gm.user_id = m.created_by
     WHERE m.group_id = $1
     ORDER BY m.meeting_date DESC, m.created_at DESC
   `, [groupId]);

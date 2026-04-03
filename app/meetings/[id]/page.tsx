@@ -14,7 +14,12 @@ export default async function MeetingDetailPage({ params }: Params) {
   await initDb();
 
   const meeting = await queryOne(
-    'SELECT m.*, u.display_name as creator_name FROM moim_meetings m JOIN moim_users u ON m.created_by = u.id WHERE m.id = $1',
+    `SELECT m.*,
+       COALESCE(NULLIF(gm.display_name,''), u.display_name) as creator_name
+     FROM moim_meetings m
+     JOIN moim_users u ON m.created_by = u.id
+     LEFT JOIN moim_group_members gm ON gm.group_id = m.group_id AND gm.user_id = m.created_by
+     WHERE m.id = $1`,
     [meetingId]
   );
   if (!meeting) notFound();
@@ -24,7 +29,14 @@ export default async function MeetingDetailPage({ params }: Params) {
     query('SELECT * FROM moim_expense_items WHERE meeting_id = $1 ORDER BY created_at ASC', [meetingId]),
     query('SELECT * FROM moim_receipts WHERE meeting_id = $1 ORDER BY uploaded_at ASC', [meetingId]),
     query('SELECT * FROM moim_audio_files WHERE meeting_id = $1 ORDER BY uploaded_at ASC', [meetingId]),
-    query('SELECT c.*, u.display_name as author_name FROM moim_comments c JOIN moim_users u ON c.author_id = u.id WHERE c.meeting_id = $1 AND c.is_deleted = 0 ORDER BY c.created_at ASC', [meetingId]),
+    query(`SELECT c.*,
+       COALESCE(NULLIF(gm.display_name,''), u.display_name) as author_name
+     FROM moim_comments c
+     JOIN moim_users u ON c.author_id = u.id
+     LEFT JOIN moim_meetings m2 ON m2.id = c.meeting_id
+     LEFT JOIN moim_group_members gm ON gm.group_id = m2.group_id AND gm.user_id = c.author_id
+     WHERE c.meeting_id = $1 AND c.is_deleted = 0
+     ORDER BY c.created_at ASC`, [meetingId]),
     query(`SELECT u.id, u.username,
        COALESCE(NULLIF(gm.display_name,''), u.display_name) as display_name
      FROM moim_meeting_members mm
