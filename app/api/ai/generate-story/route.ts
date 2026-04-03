@@ -22,7 +22,12 @@ export async function POST(request: NextRequest) {
       [meetingId]
     );
     const members = await query<{ display_name: string }>(
-      'SELECT u.display_name FROM moim_meeting_members mm JOIN moim_users u ON mm.user_id = u.id WHERE mm.meeting_id = $1',
+      `SELECT COALESCE(NULLIF(gm.display_name,''), u.display_name) as display_name
+       FROM moim_meeting_members mm
+       JOIN moim_users u ON mm.user_id = u.id
+       JOIN moim_meetings m ON mm.meeting_id = m.id
+       LEFT JOIN moim_group_members gm ON gm.group_id = m.group_id AND gm.user_id = u.id
+       WHERE mm.meeting_id = $1`,
       [meetingId]
     );
 
