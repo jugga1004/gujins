@@ -49,6 +49,9 @@ export default function MeetingDetailClient({ initialData, session }: MeetingDet
   const [aiLoading, setAiLoading] = useState('');
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState('');
+  const [editingMeeting, setEditingMeeting] = useState(false);
+  const [editForm, setEditForm] = useState({ title: '', meetingDate: '', location: '', description: '' });
+  const [editSaving, setEditSaving] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
@@ -184,6 +187,43 @@ export default function MeetingDetailClient({ initialData, session }: MeetingDet
     }
   }
 
+  function openEditMeeting() {
+    const dateStr = meeting.meeting_date
+      ? new Date(meeting.meeting_date as string).toISOString().slice(0, 10)
+      : '';
+    setEditForm({
+      title: (meeting.title as string) ?? '',
+      meetingDate: dateStr,
+      location: (meeting.location as string) ?? '',
+      description: (meeting.description as string) ?? '',
+    });
+    setEditingMeeting(true);
+  }
+
+  async function handleSaveMeeting(e: React.FormEvent) {
+    e.preventDefault();
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/meetings/${meeting.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editForm.title,
+          meetingDate: editForm.meetingDate,
+          location: editForm.location,
+          description: editForm.description,
+          topics: topics,
+        }),
+      });
+      if (res.ok) {
+        setEditingMeeting(false);
+        await refreshData();
+      }
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
   async function handleComment(e: React.FormEvent) {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -219,24 +259,98 @@ export default function MeetingDetailClient({ initialData, session }: MeetingDet
           ←
         </button>
         <div className="flex-1">
-          <p className="text-sm text-indigo-500 font-medium">{formattedDate}</p>
-          <h1 className="text-2xl font-bold text-gray-800 mt-0.5">{meeting.title as string}</h1>
-          {meeting.location && (
-            <p className="text-sm text-gray-400 mt-1">📍 {meeting.location as string}</p>
-          )}
-          {topics.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {topics.map((t, i) => (
-                <span key={i} className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-          {members.length > 0 && (
-            <p className="text-sm text-gray-400 mt-1.5">
-              👥 {members.map(m => m.display_name as string).join(', ')}
-            </p>
+          {editingMeeting ? (
+            <form onSubmit={handleSaveMeeting} className="space-y-3 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">제목</label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">날짜</label>
+                <input
+                  type="date"
+                  value={editForm.meetingDate}
+                  onChange={e => setEditForm(f => ({ ...f, meetingDate: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">장소</label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  placeholder="선택사항"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">내용</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                  rows={3}
+                  placeholder="선택사항"
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setEditingMeeting(false)}
+                  className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-50 transition"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition disabled:opacity-50"
+                >
+                  {editSaving ? '저장 중...' : '저장'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              <p className="text-sm text-indigo-500 font-medium">{formattedDate}</p>
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-2xl font-bold text-gray-800 mt-0.5 flex-1">{meeting.title as string}</h1>
+                {(session.userId === (meeting.created_by as number) || session.role === 'admin') && (
+                  <button
+                    onClick={openEditMeeting}
+                    className="text-gray-400 hover:text-indigo-600 transition mt-1 text-sm"
+                    title="기록 수정"
+                  >
+                    ✏️
+                  </button>
+                )}
+              </div>
+              {meeting.location && (
+                <p className="text-sm text-gray-400 mt-1">📍 {meeting.location as string}</p>
+              )}
+              {topics.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {topics.map((t, i) => (
+                    <span key={i} className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {members.length > 0 && (
+                <p className="text-sm text-gray-400 mt-1.5">
+                  👥 {members.map(m => m.display_name as string).join(', ')}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>

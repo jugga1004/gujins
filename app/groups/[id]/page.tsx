@@ -2,11 +2,14 @@ export const dynamic = 'force-dynamic';
 
 import { getSession } from '@/lib/auth';
 import { query, queryOne, initDb } from '@/lib/db';
+
+interface MemberRow { id: number; display_name: string; }
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import Header from '@/components/layout/Header';
+import GroupDetailClient from './GroupDetailClient';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -44,6 +47,18 @@ export default async function GroupDetailPage({ params }: Params) {
   );
   if (!group) notFound();
 
+  const members = await query<MemberRow>(
+    `SELECT u.id, COALESCE(NULLIF(gm.display_name,''), u.display_name) as display_name
+     FROM moim_group_members gm JOIN moim_users u ON gm.user_id = u.id
+     WHERE gm.group_id = $1`,
+    [groupId]
+  );
+
+  const myMembership = await queryOne<{ display_name: string }>(
+    'SELECT display_name FROM moim_group_members WHERE group_id = $1 AND user_id = $2',
+    [groupId, session.userId]
+  );
+
   const meetings = await query<MeetingRow>(`
     SELECT
       m.id, m.title, m.meeting_date, m.location, m.total_cost, m.topics,
@@ -73,6 +88,14 @@ export default async function GroupDetailPage({ params }: Params) {
             + 새 기록
           </Link>
         </div>
+
+        <GroupDetailClient
+          groupId={groupId}
+          groupName={group.name}
+          myDisplayName={myMembership?.display_name ?? ''}
+          members={members}
+          isOwner={group.created_by === session.userId}
+        />
 
         {meetings.length === 0 ? (
           <div className="text-center py-20 text-gray-400">

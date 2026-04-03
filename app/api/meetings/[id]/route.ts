@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const { title, meetingDate, location, description, topics, members } = await request.json();
 
   await execute(
-    'UPDATE meetings SET title=$1, meeting_date=$2, location=$3, description=$4, topics=$5, updated_at=NOW() WHERE id=$6',
+    'UPDATE moim_meetings SET title=$1, meeting_date=$2, location=$3, description=$4, topics=$5, updated_at=NOW() WHERE id=$6',
     [title, meetingDate, location || null, description || null, JSON.stringify(topics || []), meetingId]
   );
 

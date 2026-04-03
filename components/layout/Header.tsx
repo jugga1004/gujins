@@ -26,6 +26,11 @@ export default function Header({ user }: HeaderProps) {
         <span className="text-sm text-gray-600">
           <span className="font-medium text-gray-800">{user.displayName}</span>님
         </span>
+        {user.role === 'admin' && (
+          <Link href="/admin" className="text-xs text-indigo-500 hover:text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-lg transition">
+            관리자
+          </Link>
+        )}
         <button
           onClick={handleLogout}
           className="text-sm text-gray-500 hover:text-gray-700 transition"
